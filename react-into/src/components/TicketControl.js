@@ -3,16 +3,19 @@ import NewTicketForm from './NewTicketForm';
 import TicketList from './TicketList';
 import TicketDetail from './TicketDetail';
 import EditTicketForm from './EditTicketForm';
+import { connect } from "react-redux";
+import PropTypes from "prop-types";
 
 
 class TicketControl extends React.Component {
 
   constructor(props) {
     super(props);
+    console.log(props)
     this.state = {
-      formVisibleOnPage: false,
-      masterTicketList: [],
-      selectedTicket: null
+      //formVisibleOnPage: false,
+      selectedTicket: null,
+      editing: false
     };
     this.handleClick = this.handleClick.bind(this);
   }
@@ -20,37 +23,50 @@ class TicketControl extends React.Component {
   handleClick = () => {
     if (this.state.selectedTicket != null) {
       this.setState({
-        formVisibleOnPage: false,
+        //formVisibleOnPage: false,
         selectedTicket: null,
         editing: false 
       });
     } else {
-      this.setState(prevState => ({
-        formVisibleOnPage: !prevState.formVisibleOnPage,
-      }));
+      const { dispatch } = this.props;
+      const action = {
+        type: 'TOGGLE_FORM'
+      }
+      dispatch(action);
     }
   }
 
   handleDeletingTicket = (id) => {
-    const newMasterTicketList = this.state.masterTicketList.filter(ticket => ticket.id !== id);
-    this.setState({
-      masterTicketList: newMasterTicketList,
-      selectedTicket: null
-    });
+    const { dispatch } = this.props;
+    const action = {
+      type: 'DELETE_TICKET',
+      id: id
+    }
+    dispatch(action);
+    this.setState({selectedTicket: null});
   }
 
 
   handleAddingNewTicketToList = (newTicket) => {
-    const newMasterTicketList = this.state.masterTicketList.concat(newTicket);
-    this.setState({
-      masterTicketList: newMasterTicketList,
-      formVisibleOnPage: false 
-    });
+    const { dispatch } = this.props;
+    const {id, names, location, issue } = newTicket;
+    const action = {
+      type: 'ADD_TICKET',
+      id: id,
+      names: names,
+      location: location,
+      issue: issue
+    }
+    dispatch(action);
+    const action2 = {
+      type: 'TOGGLE_FORM'
+    }
+    dispatch(action2);
   }
 
   handleChangingSelectedTicket = (id) => {
-    const selectedTicket = this.state.masterTicketList.filter(ticket => ticket.id === id)[0];
-    this.setState({selectedTicket: selectedTicket});
+    const selectedTicket = this.props.masterTicketList[id];
+    this.state({selectedTicket: selectedTicket})
   }
 
   handleEditClick = () => {
@@ -58,16 +74,16 @@ class TicketControl extends React.Component {
     this.setState({editing: true});
   }
   
-  handleEditingTicketInList = (ticketToEdit) => {
-    const editedMasterTicketList = this.state.masterTicketList
-      .filter(ticket => ticket.id !== this.state.selectedTicket.id)
-      .concat(ticketToEdit);
-    this.setState({
-        masterTicketList: editedMasterTicketList,
-        editing: false,
-        selectedTicket: null
-      });
+  handleEditingTicketInList = (id) => {
+    const {dispatch} = this.props;
+    const action = {
+      type: 'DELETE_TICKET',
+      id: id
+    }
+    dispatch(action);
+    this.setState({selectedTicket: null})
   }
+  
 
   render(){
     let currentlyVisibleState = null;
@@ -82,12 +98,12 @@ class TicketControl extends React.Component {
         onClickingDelete = {this.handleDeletingTicket}
         onClickingEdit = {this.handleEditClick}/>
       buttonText = "Return to Ticket List";
-    } else if (this.state.formVisibleOnPage) {
+    } else if (this.props.formVisibleOnPage) {
       currentlyVisibleState = <NewTicketForm onNewTicketCreation={this.handleAddingNewTicketToList} />;
       buttonText = "Return to Ticket List";
     } else {
-      currentlyVisibleState = <TicketList ticketList={this.state.masterTicketList} onTicketSelection={this.handleChangingSelectedTicket} />;
-      buttonText = "Add Ticket";  
+      currentlyVisibleState = <TicketList ticketList={this.props.masterTicketList} onTicketSelection={this.handleChangingSelectedTicket} />;
+      buttonText = "Add Ticket";
     }
     return (
       <React.Fragment>
@@ -95,8 +111,22 @@ class TicketControl extends React.Component {
         <button onClick={this.handleClick}>{buttonText}</button> 
       </React.Fragment>
     );
-  }
-
+  };
 }
+
+TicketControl.propTypes = {
+  masterTicketList: PropTypes.object,
+  formVisibleOnPage: PropTypes.bool
+};
+
+const mapStateToProps = state => {
+  return{
+    masterTicketList: state,
+    formVisibleOnPage: state.formVisibileOnPage
+    // key-Value pairs of state to be mapped from Redux to React component go here 
+  }
+}
+
+TicketControl = connect(mapStateToProps)(TicketControl);
 
 export default TicketControl;
