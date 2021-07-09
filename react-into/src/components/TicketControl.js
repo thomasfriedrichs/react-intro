@@ -6,7 +6,7 @@ import EditTicketForm from './EditTicketForm';
 import { connect } from "react-redux";
 import PropTypes from "prop-types";
 import * as a from './../actions';
-// import Moment from 'moment';
+import Moment from 'moment';
 
 class TicketControl extends React.Component {
 
@@ -28,9 +28,9 @@ class TicketControl extends React.Component {
     );
   }
 
-  componentDidUpdate() {
-    console.log('component updated!');
-  }
+  // componentDidUpdate() {
+  //   console.log('component updated!');
+  // }
 
   componentWillUnmount() {
     console.log("component unmounted!");
@@ -38,7 +38,12 @@ class TicketControl extends React.Component {
   }
 
   updateTicketElapsedWaitTime = () => {
-    console.log('tick');
+    const { dispatch } = this.props;
+    Object.values(this.props.masterTicketList).forEach(ticket => {
+      const newFormattedWaitTime = ticket.timeOpen.fromNow(true);
+      const action = a.updateTime(ticket.id, newFormattedWaitTime);
+      dispatch(action);
+    });
   }
 
   handleClick = () => {
